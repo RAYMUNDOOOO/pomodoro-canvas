@@ -1,7 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
 interface PomodoroCanvasSettings {
 	sessionLength: number;
 	shortBreakLength: number;
@@ -54,7 +52,7 @@ class PomodoroCanvasSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 		containerEl.empty();
 
 		new Setting(containerEl)
@@ -64,7 +62,7 @@ class PomodoroCanvasSettingTab extends PluginSettingTab {
 				text.inputEl.setAttr('type', 'number');
 				text.setPlaceholder('25');
 				text.onChange(async (value) => {
-					this.plugin.settings.sessionLength = value.toString();
+					this.plugin.settings.sessionLength = Number(value);
 					await this.plugin.saveSettings();
 				})
 			});
@@ -76,7 +74,7 @@ class PomodoroCanvasSettingTab extends PluginSettingTab {
 				text.inputEl.setAttr('type', 'number');
 				text.setPlaceholder('5');
 				text.onChange(async (value) => {
-					this.plugin.settings.shortBreakLength = value.toString();
+					this.plugin.settings.shortBreakLength = Number(value)
 					await this.plugin.saveSettings();
 				})
 			});
@@ -88,7 +86,7 @@ class PomodoroCanvasSettingTab extends PluginSettingTab {
 				text.inputEl.setAttr('type', 'number');
 				text.setPlaceholder('15');
 				text.onChange(async (value) => {
-					this.plugin.settings.longBreakLength = value.toString();
+					this.plugin.settings.longBreakLength = Number(value);
 					await this.plugin.saveSettings();
 				})
 			});
