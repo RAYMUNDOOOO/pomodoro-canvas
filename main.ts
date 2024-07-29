@@ -1,4 +1,5 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { CanvasData } from 'obsidian/canvas';
 
 interface PomodoroCanvasSettings {
 	sessionLength: number;
