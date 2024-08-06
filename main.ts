@@ -13,6 +13,24 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 	longBreakLength: 25
 }
 
+enum NodeTaskStatus {
+	NotStarted,
+	Started,
+	Complete
+}
+
+enum NodeSessionStatus {
+	Inactive,
+	Active
+}
+
+interface PomodoroCanvasNode extends CanvasTextData {
+	sessionsAllocated: number;
+	sessionsCompleted: number;
+	nodeTaskStatus: NodeTaskStatus;
+	nodeSessionStatus: NodeSessionStatus;
+}
+
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
 
