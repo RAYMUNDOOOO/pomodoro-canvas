@@ -1,5 +1,5 @@
 import { App, Plugin, PluginSettingTab, Setting, Menu } from 'obsidian';
-import { CanvasTextData } from 'obsidian/canvas';
+import { CanvasNodeData, CanvasTextData } from 'obsidian/canvas';
 
 interface PomodoroCanvasSettings {
 	sessionLength: number;
@@ -18,7 +18,7 @@ enum NodeSessionStatus {
 	Active
 }
 
-interface PomodoroCanvasNode {
+interface PomodoroSession {
 	sessionsAllocated: number;
 	sessionsCompleted: number;
 	nodeSessionStatus: NodeSessionStatus;
@@ -26,7 +26,7 @@ interface PomodoroCanvasNode {
 
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
-	nodeMap: Map<string, PomodoroCanvasNode> = new Map<string, PomodoroCanvasNode>();
+	nodeMap: Map<string, PomodoroSession> = new Map<string, PomodoroSession>();
 
 	async onload() {
 		await this.loadSettings();
@@ -34,19 +34,22 @@ export default class PomodoroCanvas extends Plugin {
 		this.addSettingTab(new PomodoroCanvasSettingTab(this.app, this));
 
 		// Adding context menu to canvas nodes.
-		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasTextData) => {
+		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
+			if (node['pomodoroSession'] === undefined) {
+				let newSession: PomodoroSession = {
+					sessionsAllocated: 0,
+					sessionsCompleted: 0,
+					nodeSessionStatus: NodeSessionStatus.Inactive
+				}
+				node['pomodoroSession'] = newSession;
+			}
+
 			menu.addItem((item) => {
 				item.setTitle('+ Pomodoro session');
 				item.setIcon('star');
 				item.onClick(() => {
-					if (this.nodeMap.get(node.id) === undefined) {
-						let newNode: PomodoroCanvasNode = { sessionsAllocated: 1, sessionsCompleted: 0, nodeSessionStatus: NodeSessionStatus.Inactive };
-						this.nodeMap.set(node.id, newNode);
-					} else {
-						this.nodeMap.get(node.id).sessionsAllocated++;
-					}
-
-					console.log(this.nodeMap.get(node.id).sessionsAllocated);
+					node['pomodoroSession'].sessionsAllocated++;
+					console.log(node['pomodoroSession'].sessionsAllocated);
 				})
 			})
 
@@ -54,9 +57,11 @@ export default class PomodoroCanvas extends Plugin {
 				item.setTitle('- Pomodoro session');
 				item.setIcon('star');
 				item.onClick(() => {
-					if (this.nodeMap.get(node.id) !== undefined) {
-						this.nodeMap.get(node.id).sessionsAllocated--;
+					node['pomodoroSession'].sessionsAllocated--;
+					if (node['pomodoroSession'].sessionsAllocated < node['pomodoroSession'].sessionsCompleted) {
+						node['pomodoroSession'].sessionsAllocated = node['pomodoroSession'].sessionsCompleted;
 					}
+					console.log(node['pomodoroSession'].sessionsAllocated);
 				})
 			})
 		}));
