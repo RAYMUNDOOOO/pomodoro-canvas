@@ -13,26 +13,20 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 	longBreakLength: 25
 }
 
-enum NodeTaskStatus {
-	NotStarted,
-	Started,
-	Complete
-}
-
 enum NodeSessionStatus {
 	Inactive,
 	Active
 }
 
-interface PomodoroCanvasNode extends CanvasTextData {
+interface PomodoroCanvasNode {
 	sessionsAllocated: number;
 	sessionsCompleted: number;
-	nodeTaskStatus: NodeTaskStatus;
 	nodeSessionStatus: NodeSessionStatus;
 }
 
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
+	nodeMap: Map<string, PomodoroCanvasNode> = new Map<string, PomodoroCanvasNode>();
 
 	async onload() {
 		await this.loadSettings();
@@ -45,7 +39,14 @@ export default class PomodoroCanvas extends Plugin {
 				item.setTitle('+ Pomodoro session');
 				item.setIcon('star');
 				item.onClick(() => {
-					console.log(node.text)
+					if (this.nodeMap.get(node.id) === undefined) {
+						let newNode: PomodoroCanvasNode = { sessionsAllocated: 1, sessionsCompleted: 0, nodeSessionStatus: NodeSessionStatus.Inactive };
+						this.nodeMap.set(node.id, newNode);
+					} else {
+						this.nodeMap.get(node.id).sessionsAllocated++;
+					}
+
+					console.log(this.nodeMap.get(node.id).sessionsAllocated);
 				})
 			})
 
@@ -53,7 +54,9 @@ export default class PomodoroCanvas extends Plugin {
 				item.setTitle('- Pomodoro session');
 				item.setIcon('star');
 				item.onClick(() => {
-					console.log(node.text)
+					if (this.nodeMap.get(node.id) !== undefined) {
+						this.nodeMap.get(node.id).sessionsAllocated--;
+					}
 				})
 			})
 		}));
