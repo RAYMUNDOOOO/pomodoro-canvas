@@ -13,62 +13,125 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 	longBreakLength: 25
 }
 
-enum NodeSessionStatus {
-	Inactive,
-	Active
+enum SessionStatus {
+	NotStarted,
+	Started,
+	Complete
+}
+
+enum TimerStatus {
+	Off,
+	On,
+	Paused
 }
 
 interface PomodoroSession {
 	sessionsAllocated: number;
 	sessionsCompleted: number;
-	nodeSessionStatus: NodeSessionStatus;
+	sessionStatus: SessionStatus;
+	timerStatus: TimerStatus;
 }
 
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
-	nodeMap: Map<string, PomodoroSession> = new Map<string, PomodoroSession>();
 
 	async onload() {
 		await this.loadSettings();
 
 		this.addSettingTab(new PomodoroCanvasSettingTab(this.app, this));
 
-		// Adding context menu to canvas nodes.
+		// Adding items to CanvasNode context menus
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
 			if (node['pomodoroSession'] === undefined) {
 				let newSession: PomodoroSession = {
 					sessionsAllocated: 0,
 					sessionsCompleted: 0,
-					nodeSessionStatus: NodeSessionStatus.Inactive
+					sessionStatus: SessionStatus.NotStarted,
+					timerStatus: TimerStatus.Off
 				}
 				node['pomodoroSession'] = newSession;
 			}
 
 			menu.addItem((item) => {
-				item.setTitle('+ Pomodoro session');
-				item.setIcon('star');
-				item.onClick(() => {
-					node['pomodoroSession'].sessionsAllocated++;
-					console.log(node['pomodoroSession'].sessionsAllocated);
-				})
+				item.setTitle('+ Pomodoro session')
+					.setIcon('star')
+					.onClick(() => {
+						node['pomodoroSession'].sessionsAllocated++;
+						console.log(node['pomodoroSession'].sessionsAllocated);
+					})
 			})
 
 			menu.addItem((item) => {
-				item.setTitle('- Pomodoro session');
-				item.setIcon('star');
-				item.onClick(() => {
-					node['pomodoroSession'].sessionsAllocated--;
-					if (node['pomodoroSession'].sessionsAllocated < node['pomodoroSession'].sessionsCompleted) {
-						node['pomodoroSession'].sessionsAllocated = node['pomodoroSession'].sessionsCompleted;
-					}
-					console.log(node['pomodoroSession'].sessionsAllocated);
-				})
+				item.setTitle('- Pomodoro session')
+					.setIcon('star')
+					.onClick(() => {
+						if (node['pomodoroSession'].sessionsAllocated > node['pomodoroSession'].sessionsCompleted) {
+							node['pomodoroSession'].sessionsAllocated--;
+						}
+						console.log(node['pomodoroSession'].sessionsAllocated);
+					})
 			})
+
+			menu.addItem((item) => {
+				item.setTitle('Mark complete')
+					.setIcon('star')
+					.onClick(() => {
+						node['pomodoroSession'].sessionStatus = SessionStatus.Complete;
+						node['pomodoroSession'].timerStatus = TimerStatus.Off;
+					})
+			})
+
+			switch (node['pomodoroSession'].timerStatus) {
+				case TimerStatus.Off:
+					menu.addItem((item) => {
+						item.setTitle('Start session')
+							.setIcon('star')
+							.onClick(() => {
+								node['pomodoroSession'].timerStatus = TimerStatus.On;
+							})
+					})
+					break;
+
+				case TimerStatus.On:
+					menu.addItem((item) => {
+						item.setTitle('Pause session')
+							.setIcon('star')
+							.onClick(() => {
+								node['pomodoroSession'].timerStatus = TimerStatus.Paused;
+							})
+					})
+
+					menu.addItem((item) => {
+						item.setTitle('Stop session')
+							.setIcon('star')
+							.onClick(() => {
+								node['pomodoroSession'].timerStatus = TimerStatus.Off;
+							})
+					})
+					break;
+
+				case TimerStatus.Paused:
+					menu.addItem((item) => {
+						item.setTitle('Resume session')
+							.setIcon('star')
+							.onClick(() => {
+								node['pomodoroSession'].timerStatus = TimerStatus.On;
+							})
+					})
+
+					menu.addItem((item) => {
+						item.setTitle('Stop session')
+							.setIcon('star')
+							.onClick(() => {
+								node['pomodoroSession'].timerStatus = TimerStatus.Off;
+							})
+					})
+					break;
+			}
 		}));
 	}
 
 	onunload() {
-
 	}
 
 	async loadSettings() {
