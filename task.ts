@@ -1,9 +1,9 @@
-enum TaskStatus {
+export enum TaskStatus {
 	Incomplete,
 	Complete
 }
 
-enum TimerStatus {
+export enum TimerStatus {
 	Off,
 	On,
 	Paused

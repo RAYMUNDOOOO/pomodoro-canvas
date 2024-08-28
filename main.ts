@@ -1,6 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, Menu } from 'obsidian';
 import { CanvasNodeData } from 'obsidian/canvas';
-import { Task } from 'task';
+import { Task, TaskStatus, TimerStatus } from 'task';
 
 interface PomodoroCanvasSettings {
 	sessionLength: number;
@@ -12,24 +12,6 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 	sessionLength: 25,
 	shortBreakLength: 25,
 	longBreakLength: 25
-}
-
-enum NodeStatus {
-	Incomplete,
-	Complete
-}
-
-enum TimerStatus {
-	Off,
-	On,
-	Paused
-}
-
-interface Task {
-	sessionsAllocated: number;
-	sessionsCompleted: number;
-	nodeStatus: NodeStatus;
-	timerStatus: TimerStatus;
 }
 
 export default class PomodoroCanvas extends Plugin {
@@ -46,7 +28,7 @@ export default class PomodoroCanvas extends Plugin {
 				let t: Task = {
 					sessionsAllocated: 0,
 					sessionsCompleted: 0,
-					nodeStatus: NodeStatus.Incomplete,
+					taskStatus: TaskStatus.Incomplete,
 					timerStatus: TimerStatus.Off
 				}
 				node['task'] = t;
