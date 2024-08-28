@@ -16,15 +16,19 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
+	currentTasks: Map<string, Task>;
 
 	async onload() {
 		await this.loadSettings();
 
 		this.addSettingTab(new PomodoroCanvasSettingTab(this.app, this));
 
-		// Adding items to CanvasNode context menus
+		/* 
+		 * Adding buttons to the context menu to allocate, de-allocate, start, pause, resume and stop
+		 * pomodoro sessions on a given node.
+		 */
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
-			if (node['pomodoroSession'] === undefined) {
+			if (node['task'] === undefined) {
 				let t: Task = {
 					sessionsAllocated: 0,
 					sessionsCompleted: 0,
@@ -32,14 +36,15 @@ export default class PomodoroCanvas extends Plugin {
 					timerStatus: TimerStatus.Off
 				}
 				node['task'] = t;
+				this.currentTasks.set(node.id, t);
 			}
 
 			menu.addItem((item) => {
 				item.setTitle('+ Pomodoro session')
 					.setIcon('star')
 					.onClick(() => {
-						node['task'].sessionsAllocated++;
-						console.log(node['task'].sessionsAllocated);
+						if (this.currentTasks.has(node.id)) {
+						}
 					})
 			})
 
