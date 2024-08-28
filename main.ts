@@ -1,5 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, Menu } from 'obsidian';
-import { CanvasNodeData, CanvasTextData } from 'obsidian/canvas';
+import { CanvasNodeData } from 'obsidian/canvas';
+import { Task } from 'task';
 
 interface PomodoroCanvasSettings {
 	sessionLength: number;
@@ -13,9 +14,8 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 	longBreakLength: 25
 }
 
-enum SessionStatus {
-	NotStarted,
-	Started,
+enum NodeStatus {
+	Incomplete,
 	Complete
 }
 
@@ -25,10 +25,10 @@ enum TimerStatus {
 	Paused
 }
 
-interface PomodoroSession {
+interface Task {
 	sessionsAllocated: number;
 	sessionsCompleted: number;
-	sessionStatus: SessionStatus;
+	nodeStatus: NodeStatus;
 	timerStatus: TimerStatus;
 }
 
@@ -43,21 +43,21 @@ export default class PomodoroCanvas extends Plugin {
 		// Adding items to CanvasNode context menus
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
 			if (node['pomodoroSession'] === undefined) {
-				let newSession: PomodoroSession = {
+				let t: Task = {
 					sessionsAllocated: 0,
 					sessionsCompleted: 0,
-					sessionStatus: SessionStatus.NotStarted,
+					nodeStatus: NodeStatus.Incomplete,
 					timerStatus: TimerStatus.Off
 				}
-				node['pomodoroSession'] = newSession;
+				node['task'] = t;
 			}
 
 			menu.addItem((item) => {
 				item.setTitle('+ Pomodoro session')
 					.setIcon('star')
 					.onClick(() => {
-						node['pomodoroSession'].sessionsAllocated++;
-						console.log(node['pomodoroSession'].sessionsAllocated);
+						node['task'].sessionsAllocated++;
+						console.log(node['task'].sessionsAllocated);
 					})
 			})
 
@@ -65,10 +65,10 @@ export default class PomodoroCanvas extends Plugin {
 				item.setTitle('- Pomodoro session')
 					.setIcon('star')
 					.onClick(() => {
-						if (node['pomodoroSession'].sessionsAllocated > node['pomodoroSession'].sessionsCompleted) {
-							node['pomodoroSession'].sessionsAllocated--;
+						if (node['task'].sessionsAllocated > node['task'].sessionsCompleted) {
+							node['task'].sessionsAllocated--;
 						}
-						console.log(node['pomodoroSession'].sessionsAllocated);
+						console.log(node['task'].sessionsAllocated);
 					})
 			})
 
@@ -76,8 +76,15 @@ export default class PomodoroCanvas extends Plugin {
 				item.setTitle('Mark complete')
 					.setIcon('star')
 					.onClick(() => {
-						node['pomodoroSession'].sessionStatus = SessionStatus.Complete;
-						node['pomodoroSession'].timerStatus = TimerStatus.Off;
+						node['task'].sessionStatus = NodeStatus.Complete;
+						node['task'].timerStatus = TimerStatus.Off;
+					})
+			})
+
+			menu.addItem((item) => {
+				item.setTitle('DEBUG')
+					.setIcon('star')
+					.onClick(() => {
 					})
 			})
 
