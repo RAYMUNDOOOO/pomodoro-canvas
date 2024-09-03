@@ -27,6 +27,7 @@ export default class PomodoroCanvas extends Plugin {
 		 * pomodoro sessions on a given node.
 		 */
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
+			// Adding button to allocate sessions to task if current node is not in Map
 			if (!this.currentCanvas.has(node.id)) {
 				this.addContextMenuButton(menu, '+', 'star', () => {
 					let t: Task = {
@@ -35,8 +36,25 @@ export default class PomodoroCanvas extends Plugin {
 						taskStatus: TaskStatus.Incomplete,
 						timerStatus: TimerStatus.Off
 					};
+
 					this.currentCanvas.set(node.id, t);
 				})
+			} else {
+				// Add buttons to allocate & de-allocate sessions, and start timer if node is in Map
+				let t: Task = this.currentCanvas.get(node.id);
+				this.addContextMenuButton(menu, '+', 'star', () => {
+					t.sessionsAllocated++;
+				});
+
+				this.addContextMenuButton(menu, '-', 'star', () => {
+					if (t.sessionsAllocated > 0) {
+						t.sessionsAllocated--;
+					}
+				});
+
+				this.addContextMenuButton(menu, 'Start timer', 'star', () => {
+					t.timerStatus = TimerStatus.On;
+				});
 			}
 
 			// DEBUGGING
