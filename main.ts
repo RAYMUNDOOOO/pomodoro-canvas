@@ -16,11 +16,10 @@ const DEFAULT_SETTINGS: Partial<PomodoroCanvasSettings> = {
 
 export default class PomodoroCanvas extends Plugin {
 	settings: PomodoroCanvasSettings;
-	currentTasks: Map<string, Task>;
+	currentCanvas: Map<string, Task> = new Map<string, Task>();
 
 	async onload() {
 		await this.loadSettings();
-
 		this.addSettingTab(new PomodoroCanvasSettingTab(this.app, this));
 
 		/* 
@@ -28,100 +27,24 @@ export default class PomodoroCanvas extends Plugin {
 		 * pomodoro sessions on a given node.
 		 */
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
-			if (node['task'] === undefined) {
-				let t: Task = {
-					sessionsAllocated: 0,
-					sessionsCompleted: 0,
-					taskStatus: TaskStatus.Incomplete,
-					timerStatus: TimerStatus.Off
+			if (!this.currentCanvas.has(node.id)) {
+				this.addContextMenuButton(menu, '+', 'star', () => {
+					let t: Task = {
+						sessionsAllocated: 1,
+						sessionsCompleted: 0,
+						taskStatus: TaskStatus.Incomplete,
+						timerStatus: TimerStatus.Off
+					};
+					this.currentCanvas.set(node.id, t);
+				})
+			}
+
+			// DEBUGGING
+			this.addContextMenuButton(menu, 'DEBUG', 'star', () => {
+				if (this.currentCanvas.has(node.id)) {
+					console.log(this.currentCanvas.get(node.id));
 				}
-				node['task'] = t;
-				this.currentTasks.set(node.id, t);
-			}
-
-			menu.addItem((item) => {
-				item.setTitle('+ Pomodoro session')
-					.setIcon('star')
-					.onClick(() => {
-						if (this.currentTasks.has(node.id)) {
-						}
-					})
 			})
-
-			menu.addItem((item) => {
-				item.setTitle('- Pomodoro session')
-					.setIcon('star')
-					.onClick(() => {
-						if (node['task'].sessionsAllocated > node['task'].sessionsCompleted) {
-							node['task'].sessionsAllocated--;
-						}
-						console.log(node['task'].sessionsAllocated);
-					})
-			})
-
-			menu.addItem((item) => {
-				item.setTitle('Mark complete')
-					.setIcon('star')
-					.onClick(() => {
-						node['task'].sessionStatus = NodeStatus.Complete;
-						node['task'].timerStatus = TimerStatus.Off;
-					})
-			})
-
-			menu.addItem((item) => {
-				item.setTitle('DEBUG')
-					.setIcon('star')
-					.onClick(() => {
-					})
-			})
-
-			switch (node['pomodoroSession'].timerStatus) {
-				case TimerStatus.Off:
-					menu.addItem((item) => {
-						item.setTitle('Start session')
-							.setIcon('star')
-							.onClick(() => {
-								node['pomodoroSession'].timerStatus = TimerStatus.On;
-							})
-					})
-					break;
-
-				case TimerStatus.On:
-					menu.addItem((item) => {
-						item.setTitle('Pause session')
-							.setIcon('star')
-							.onClick(() => {
-								node['pomodoroSession'].timerStatus = TimerStatus.Paused;
-							})
-					})
-
-					menu.addItem((item) => {
-						item.setTitle('Stop session')
-							.setIcon('star')
-							.onClick(() => {
-								node['pomodoroSession'].timerStatus = TimerStatus.Off;
-							})
-					})
-					break;
-
-				case TimerStatus.Paused:
-					menu.addItem((item) => {
-						item.setTitle('Resume session')
-							.setIcon('star')
-							.onClick(() => {
-								node['pomodoroSession'].timerStatus = TimerStatus.On;
-							})
-					})
-
-					menu.addItem((item) => {
-						item.setTitle('Stop session')
-							.setIcon('star')
-							.onClick(() => {
-								node['pomodoroSession'].timerStatus = TimerStatus.Off;
-							})
-					})
-					break;
-			}
 		}));
 	}
 
@@ -134,6 +57,14 @@ export default class PomodoroCanvas extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	addContextMenuButton(menu: Menu, title: string, icon: string, callback: any) {
+		menu.addItem((item) => {
+			item.setTitle(title)
+				.setIcon(icon)
+				.onClick(callback)
+		})
 	}
 }
 
