@@ -27,6 +27,13 @@ export default class PomodoroCanvas extends Plugin {
 		 * pomodoro sessions on a given node.
 		 */
 		this.registerEvent(this.app.workspace.on('canvas:node-menu', (menu: Menu, node: CanvasNodeData) => {
+			// DEBUGGING
+			this.addContextMenuButton(menu, 'DEBUG', 'star', () => {
+				if (this.currentCanvas.has(node.id)) {
+					console.log(this.currentCanvas.get(node.id));
+				}
+			})
+
 			// Adding button to allocate sessions to task if current node is not in Map
 			if (!this.currentCanvas.has(node.id)) {
 				this.addContextMenuButton(menu, '+', 'star', () => {
@@ -39,30 +46,56 @@ export default class PomodoroCanvas extends Plugin {
 
 					this.currentCanvas.set(node.id, t);
 				})
-			} else {
-				// Add buttons to allocate & de-allocate sessions, and start timer if node is in Map
-				let t: Task = this.currentCanvas.get(node.id);
-				this.addContextMenuButton(menu, '+', 'star', () => {
-					t.sessionsAllocated++;
-				});
 
-				this.addContextMenuButton(menu, '-', 'star', () => {
-					if (t.sessionsAllocated > 0) {
-						t.sessionsAllocated--;
-					}
-				});
-
-				this.addContextMenuButton(menu, 'Start timer', 'star', () => {
-					t.timerStatus = TimerStatus.On;
-				});
+				return;
 			}
 
-			// DEBUGGING
-			this.addContextMenuButton(menu, 'DEBUG', 'star', () => {
-				if (this.currentCanvas.has(node.id)) {
-					console.log(this.currentCanvas.get(node.id));
+			// Add buttons to allocate & de-allocate sessions
+			let t: Task = this.currentCanvas.get(node.id);
+			this.addContextMenuButton(menu, '+', 'star', () => {
+				t.sessionsAllocated++;
+			});
+
+			this.addContextMenuButton(menu, '-', 'star', () => {
+				if (t.sessionsAllocated > 0) {
+					t.sessionsAllocated--;
 				}
-			})
+			});
+
+			this.addContextMenuButton(menu, 'Complete', 'star', () => {
+				t.taskStatus = TaskStatus.Complete;
+				t.timerStatus = TimerStatus.Off;
+			});
+
+			// Add buttons to manipulate timer
+			switch (t.timerStatus) {
+				case TimerStatus.Off:
+					this.addContextMenuButton(menu, 'Start', 'star', () => {
+						t.timerStatus = TimerStatus.On;
+					});
+
+					break;
+
+				case TimerStatus.On:
+					this.addContextMenuButton(menu, 'Pause', 'star', () => {
+						t.timerStatus = TimerStatus.Paused;
+					});
+					this.addContextMenuButton(menu, 'Stop', 'star', () => {
+						t.timerStatus = TimerStatus.Off;
+					});
+
+					break;
+
+				case TimerStatus.Paused:
+					this.addContextMenuButton(menu, 'Resume', 'star', () => {
+						t.timerStatus = TimerStatus.On;
+					});
+					this.addContextMenuButton(menu, 'Stop', 'star', () => {
+						t.timerStatus = TimerStatus.Off;
+					});
+
+					break;
+			}
 		}));
 	}
 
